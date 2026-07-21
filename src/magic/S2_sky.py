@@ -186,18 +186,17 @@ def make_sky(
     if subfiles is None:
         subfiles = files
     for k, cfile in enumerate(subfiles):
-        cdata = datamodels.open(cfile)
-        cdata.data -= skyflat_mean
-        if scalebkg:
-            print("  ", k, medsky - istackmed[k])
-            cdata.data += medsky - istackmed[k]
-        else:
-            print("  ", k)
-        ndata = np.isnan(cdata.data)
-        #cdata.data[ndata] = 0.0  # This sets all NaNs to 0
-        cdata.dq[ndata] = cdata.dq[ndata] & dqflags.pixel["DO_NOT_USE"]
-        cfile = cfile.replace(inputdir, outputdir)
-        cdata.write(cfile.replace("_cal.fits", "_skysub_cal.fits"))
+        with datamodels.open(cfile) as cdata:
+            cdata.data -= skyflat_mean
+            if scalebkg:
+                print("  ", k, medsky - istackmed[k])
+                cdata.data += medsky - istackmed[k]
+            else:
+                print("  ", k)
+            ndata = np.isnan(cdata.data)
+            #cdata.data[ndata] = 0.0  # This sets all NaNs to 0
+            cdata.dq[ndata] = cdata.dq[ndata] & dqflags.pixel["DO_NOT_USE"]
+            cfile = cfile.replace(inputdir, outputdir)
+            cdata.save(cfile.replace("_cal.fits", "_skysub_cal.fits"), overwrite=True)
 
     return skyflat_mean, skyflat_std
-
